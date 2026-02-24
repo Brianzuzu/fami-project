@@ -5,12 +5,8 @@ import { auth } from '../app/firebaseConfig';
 //
 //  • Android Emulator  → 'http://10.0.2.2:3000'
 //  • iOS Simulator     → 'http://localhost:3000'
-//  • Physical device   → use your machine's actual LAN IP, e.g.:
-//                        'http://172.16.13.53:3000'
-//
-// Change this ONE line to switch environments:
-// ─────────────────────────────────────────────────────────────────────────────
-const BACKEND_URL = 'http://172.16.33.66:3000';
+//   Live Backend     : 'https://fami-project.onrender.com'
+const BACKEND_URL = 'https://fami-project.onrender.com';
 
 const ENDPOINT_MAP: Record<string, string> = {
     'processInvestment': '/api/investments/process',

@@ -2,7 +2,7 @@ import { auth } from './firebase';
 
 // CONFIGURATION: Set this to your standalone server URL (e.g. from Render/Railway)
 // Set it to null to use Firebase Cloud Functions (requires Blaze plan)
-const STANDALONE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+const STANDALONE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://fami-project.onrender.com';
 
 /**
  * Helper to call backend functions.

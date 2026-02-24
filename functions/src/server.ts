@@ -56,6 +56,7 @@ if (!admin.apps.length) {
         console.warn('   For local dev, place serviceAccountKey.json in functions/');
         console.warn('   Download it from Firebase Console → Project Settings → Service Accounts');
     }
+    admin.firestore().settings({ ignoreUndefinedProperties: true });
 }
 
 // ─── Auth Middleware ──────────────────────────────────────────────────────────

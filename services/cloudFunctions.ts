@@ -8,13 +8,8 @@ import { Platform } from 'react-native';
 
 const functions = getFunctions(app);
 
-// BACKEND URL — change this to switch environments:
-//   Android Emulator : 'http://10.0.2.2:3000'
-//   iOS Simulator    : 'http://localhost:3000'
-//   Physical device  : 'http://172.16.33.66:3000'  ← your machine's LAN IP
-const STANDALONE_BACKEND_URL = Platform.OS === 'android'
-    ? 'http://172.16.33.66:3000'   // Physical Android device (use 10.0.2.2 for emulator)
-    : 'http://172.16.33.66:3000';  // Physical iOS device (use localhost for simulator)
+//   Live Backend     : 'https://fami-project.onrender.com'
+const STANDALONE_BACKEND_URL = 'https://fami-project.onrender.com';
 
 // Connect to functions emulator in development if no standalone URL is set
 if (__DEV__ && !STANDALONE_BACKEND_URL) {

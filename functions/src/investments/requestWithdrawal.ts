@@ -95,13 +95,12 @@ export const requestWithdrawal = functions.https.onCall(async (data, context) =>
 
     await batch.commit();
 
-    // 2. Notify Investor
     await notifyUser(
         uid,
         "Withdrawal Request Received",
         `Your request to withdraw KES ${withdrawalAmount.toLocaleString()} is being processed. Please await approval by Fami(admin).`,
         "withdrawal",
-        { transactionId: txRef.id, investmentId }
+        { transactionId: txRef.id, investmentId: investmentId || null }
     );
 
     // 3. Notify Admin
@@ -109,7 +108,7 @@ export const requestWithdrawal = functions.https.onCall(async (data, context) =>
         "New Withdrawal Request",
         `${userData?.username || 'User'} requested a withdrawal of KES ${withdrawalAmount.toLocaleString()}${investmentId ? ` from pool ${poolInfo?.poolName}` : ''}.`,
         "withdrawal_pending",
-        { transactionId: txRef.id, uid, investmentId }
+        { transactionId: txRef.id, uid, investmentId: investmentId || null }
     );
 
     return {
