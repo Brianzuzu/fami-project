@@ -71,6 +71,19 @@ export default function PaymentPortal() {
             );
 
             if (result.success) {
+                // Create a pending investment record so it shows up in Portfolio
+                try {
+                    await processLocalInvestment({
+                        poolId,
+                        amount: parseFloat(amount),
+                        contractType,
+                        paymentMethod: "M-Pesa (Automated)",
+                        paymentReference: result.checkoutRequestID // Store this to link later
+                    });
+                } catch (e) {
+                    console.error("Error creating pending record:", e);
+                }
+
                 Alert.alert(
                     "Request Sent",
                     "Please check your phone for an M-Pesa PIN prompt to complete the payment.",

@@ -287,13 +287,23 @@ export default function Home() {
                     <Text style={styles.invPoolName}>{inv.poolName}</Text>
                     <View style={[
                       styles.statusBadge,
-                      { backgroundColor: inv.status === 'pending_withdrawal' ? '#FEF3C7' : (isMatured(inv.maturityDate) ? '#DCFCE7' : '#F1F5F9') }
+                      {
+                        backgroundColor: inv.status === 'pending_withdrawal' ? '#FEF3C7' :
+                          inv.status === 'pending' ? '#DBEAFE' :
+                            (isMatured(inv.maturityDate) ? '#DCFCE7' : '#F1F5F9')
+                      }
                     ]}>
                       <Text style={[
                         styles.statusText,
-                        { color: inv.status === 'pending_withdrawal' ? '#92400E' : (isMatured(inv.maturityDate) ? '#166534' : '#64748B') }
+                        {
+                          color: inv.status === 'pending_withdrawal' ? '#92400E' :
+                            inv.status === 'pending' ? '#1E40AF' :
+                              (isMatured(inv.maturityDate) ? '#166534' : '#64748B')
+                        }
                       ]}>
-                        {inv.status === 'pending_withdrawal' ? 'Pending Approval' : (isMatured(inv.maturityDate) ? 'Ready' : 'Growing')}
+                        {inv.status === 'pending_withdrawal' ? 'Pending Approval' :
+                          inv.status === 'pending' ? 'Pending Payment' :
+                            (isMatured(inv.maturityDate) ? 'Ready' : 'Growing')}
                       </Text>
                     </View>
                   </View>

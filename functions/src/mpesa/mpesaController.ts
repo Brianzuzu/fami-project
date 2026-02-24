@@ -117,9 +117,23 @@ export const handleMpesaCallback = async (req: Request, res: Response) => {
                 updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
 
-            // 2. Process the actual investment in Fami
-            // We can reuse the logic from processInvestment or trigger it
-            // For now, let's create a transaction record
+            // 2. Find and update the corresponding investment
+            const investmentsRef = db.collection('investments');
+            const investmentQuery = await investmentsRef
+                .where('paymentReference', '==', checkoutRequestID)
+                .limit(1)
+                .get();
+
+            if (!investmentQuery.empty) {
+                const investmentDoc = investmentQuery.docs[0];
+                await investmentDoc.ref.update({
+                    status: 'active', // Mark it as active now that payment is confirmed
+                    mpesaReceipt: mpesaReceiptNumber,
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                });
+            }
+
+            // 3. Create a clean transaction record
             const txRef = db.collection('transactions').doc();
             await txRef.set({
                 uid: requestData.uid,
@@ -137,12 +151,12 @@ export const handleMpesaCallback = async (req: Request, res: Response) => {
                 }
             });
 
-            // Update user balance/notifications etc. (simplified here)
+            // 4. Send Success Notification
             await db.collection('notifications').add({
                 uid: requestData.uid,
-                title: 'Payment Received',
-                body: `Your payment of KES ${amount} for ${requestData.poolName} has been confirmed.`,
-                type: 'payment',
+                title: 'Investment Active!',
+                body: `Your payment of KES ${amount} for ${requestData.poolName} has been confirmed. Your investment is now active!`,
+                type: 'investment',
                 read: false,
                 createdAt: admin.firestore.FieldValue.serverTimestamp()
             });
