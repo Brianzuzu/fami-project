@@ -13,7 +13,6 @@ import {
     Filter,
     Search,
     ChevronRight,
-    ArrowUpRight,
     PieChart,
     Wallet,
     Clock,

@@ -7,7 +7,7 @@ import { db } from '../lib/firebase';
 import {
     Wallet, ShieldCheck, AlertTriangle, CheckCircle2, XCircle,
     ArrowUpRight, Calendar, Search, TrendingUp, Clock, Building2,
-    Phone, Leaf, ChevronDown, ChevronUp, Filter, UserCheck, Eye
+    Phone, Leaf, ChevronDown, ChevronUp, Filter, UserCheck
 } from 'lucide-react';
 
 interface TrustReview {
