@@ -1,0 +1,10 @@
+functions/lib/
+functions/node_modules/
+functions/.eslintrc.json
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+serviceAccountKey.json
+.env
+*.env.local

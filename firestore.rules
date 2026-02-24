@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===== Helper Functions =====
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isFarmer() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'farmer';
+    }
+    
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+    
+    function isVerified() {
+      return isAuthenticated() &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.kycStatus == 'verified';
+    }
+    
+    // ===== Collections =====
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isOwner(userId) && 
+                       // Users can't change their own role or balance
+                       (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'balance'])) ||
+                       isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Pools collection
+    match /pools/{poolId} {
+      // Anyone can read active pools
+      allow read: if resource.data.status == 'active' || isAdmin() || 
+                     (isFarmer() && resource.data.farmerId == request.auth.uid);
+      
+      // Only farmers can create pools (status must be 'draft')
+      allow create: if isFarmer() && request.resource.data.status == 'draft';
+      
+      // Admins can update any pool, farmers can only update their own drafts
+      allow update: if isAdmin() || 
+                       (isFarmer() && 
+                        resource.data.farmerId == request.auth.uid && 
+                        resource.data.status == 'draft');
+      
+      allow delete: if isAdmin();
+    }
+    
+    // Investments collection (read-only for users, write via Cloud Functions)
+    match /investments/{investmentId} {
+      allow read: if isOwner(resource.data.uid) || isAdmin();
+      allow create, update, delete: if false; // Only via Cloud Functions
+    }
+    
+    // Transactions collection (read-only for users, write via Cloud Functions)
+    match /transactions/{transactionId} {
+      allow read: if isOwner(resource.data.uid) || isAdmin();
+      allow create, update, delete: if false; // Only via Cloud Functions
+    }
+    
+    // Admin actions (read-only audit log)
+    match /admin_actions/{actionId} {
+      allow read: if isAdmin();
+      allow write: if false; // Only via Cloud Functions
+    }
+    
+    // Notifications
+    match /notifications/{notificationId} {
+      allow read: if isOwner(resource.data.uid);
+      // Users can mark notifications as read
+      allow update: if isOwner(resource.data.uid) && 
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow create, delete: if false; // Only via Cloud Functions
+    }
+    
+    // Analytics (admin only, read-only)
+    match /analytics/{docId} {
+      allow read: if isAdmin();
+      allow write: if false; // Only via Cloud Functions
+    }
+  }
+}

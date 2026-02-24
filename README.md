@@ -4,17 +4,19 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
 ## Get started
 
-1. Install dependencies
+### 1. Mobile App (Expo)
+```bash
+npm install
+npx expo start
+```
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-    npx expo start
-   ```
+### 2. Admin Dashboard (Web)
+The Admin Dashboard is a standalone web application located in the `/admin` directory.
+```bash
+cd admin
+npm install
+npm run dev
+```
 
 In the output, you'll find options to open the app in a
 
