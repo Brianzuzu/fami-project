@@ -35,10 +35,25 @@ export const processLocalInvestment = async (params: InvestmentParams) => {
         const userData = userSnap.data();
 
         // 2. Get Pool Data
-        const poolRef = doc(db, "pools", poolId);
-        const poolSnap = await getDoc(poolRef);
-        if (!poolSnap.exists()) throw new Error("Pool not found");
-        const poolData = poolSnap.data();
+        let poolData: any = { name: "General Investment", duration: "6", standardROI: "10%" };
+        let poolRef = null;
+
+        if (poolId === "WALLET_TOPUP") {
+            poolData = {
+                name: "Fami Wallet Top-up",
+                duration: "0",
+                standardROI: "0%",
+                category: "Wallet"
+            };
+        } else {
+            poolRef = doc(db, "pools", poolId);
+            const poolSnap = await getDoc(poolRef);
+            if (!poolSnap.exists()) {
+                console.warn("Pool not found, using placeholder data for ID:", poolId);
+            } else {
+                poolData = poolSnap.data();
+            }
+        }
 
         // 3. Validation
         if (paymentMethod === 'Wallet' && (userData.balance || 0) < amount) {
@@ -85,10 +100,10 @@ export const processLocalInvestment = async (params: InvestmentParams) => {
             uid: user.uid,
             userName: userData.displayName || userData.username || 'Investor',
             amount: amount.toString(),
-            type: 'Withdrawal',
-            category: 'Investment',
+            type: poolId === "WALLET_TOPUP" ? 'Deposit' : 'Withdrawal',
+            category: poolId === "WALLET_TOPUP" ? 'Funding' : 'Investment',
             method: paymentMethod,
-            description: `Investment in ${poolData.name}`,
+            description: poolId === "WALLET_TOPUP" ? "Wallet Top-up via M-Pesa" : `Investment in ${poolData.name}`,
             status: transStatus,
             date: serverTimestamp(),
             metadata: { poolId, investmentId: investmentRef.id, paymentReference }
@@ -102,11 +117,13 @@ export const processLocalInvestment = async (params: InvestmentParams) => {
             });
         }
 
-        // Update Pool Funding
-        batch.update(poolRef, {
-            currentAmount: increment(amount),
-            updatedAt: serverTimestamp()
-        });
+        // Update Pool Funding (Skip for Wallet top-ups)
+        if (poolRef) {
+            batch.update(poolRef, {
+                currentAmount: increment(amount),
+                updatedAt: serverTimestamp()
+            });
+        }
 
         // Add Notification
         const notifRef = doc(collection(db, "notifications"));
