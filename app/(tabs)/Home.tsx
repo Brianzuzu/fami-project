@@ -143,6 +143,21 @@ export default function Home() {
     return date <= new Date();
   };
 
+  const handleInvestmentPress = (inv: any) => {
+    if (inv.status === 'pending') {
+      router.push({
+        pathname: "/PaymentPortal",
+        params: {
+          poolId: inv.poolId,
+          poolName: inv.poolName,
+          amount: inv.amount.toString(),
+          contractType: inv.contractType || 'standard',
+          method: "M-Pesa"
+        }
+      } as any);
+    }
+  };
+
   const handlePoolWithdraw = async (investment: any) => {
     if (!isMatured(investment.maturityDate)) {
       const date = investment.maturityDate.toDate ? investment.maturityDate.toDate() : new Date(investment.maturityDate.seconds ? investment.maturityDate.seconds * 1000 : investment.maturityDate);
@@ -282,7 +297,12 @@ export default function Home() {
               </View>
             ) : (
               activeInvestments.map((inv) => (
-                <View key={inv.id} style={styles.investmentItem}>
+                <TouchableOpacity
+                  key={inv.id}
+                  style={styles.investmentItem}
+                  onPress={() => handleInvestmentPress(inv)}
+                  disabled={inv.status !== 'pending'}
+                >
                   <View style={styles.invHeader}>
                     <Text style={styles.invPoolName}>{inv.poolName}</Text>
                     <View style={[
@@ -323,19 +343,26 @@ export default function Home() {
                     </View>
                   </View>
 
-                  <TouchableOpacity
-                    style={[
-                      styles.withdrawalBtn,
-                      (!isMatured(inv.maturityDate) || inv.status === 'pending_withdrawal') && styles.disabledBtn
-                    ]}
-                    onPress={() => handlePoolWithdraw(inv)}
-                    disabled={inv.status === 'pending_withdrawal'}
-                  >
-                    <Text style={styles.withdrawalBtnText}>
-                      {inv.status === 'pending_withdrawal' ? 'Awaiting Fami(admin) Approval' : 'Withdraw to Wallet'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                  {inv.status === 'pending' ? (
+                    <View style={styles.payNowBtn}>
+                      <MaterialCommunityIcons name="cellphone-nfc" size={16} color="white" />
+                      <Text style={styles.payNowText}>Complete M-Pesa Payment</Text>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={[
+                        styles.withdrawalBtn,
+                        (!isMatured(inv.maturityDate) || inv.status === 'pending_withdrawal') && styles.disabledBtn
+                      ]}
+                      onPress={() => handlePoolWithdraw(inv)}
+                      disabled={inv.status === 'pending_withdrawal'}
+                    >
+                      <Text style={styles.withdrawalBtnText}>
+                        {inv.status === 'pending_withdrawal' ? 'Awaiting Fami(admin) Approval' : 'Withdraw to Wallet'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </TouchableOpacity>
               ))
             )}
           </View>
@@ -863,4 +890,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textDecorationLine: 'underline',
   },
+  payNowBtn: {
+    backgroundColor: '#10B981',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 8,
+    marginTop: 10,
+  },
+  payNowText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
+  }
 });

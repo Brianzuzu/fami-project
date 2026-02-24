@@ -83,7 +83,22 @@ export default function Accounts() {
       const userRef = doc(db, "users", user.uid);
 
       if (type === "Deposit") {
-        // For Deposits, we complete them immediately and update balance
+        if (selectedMethod === "M-Pesa") {
+          // Redirect to PaymentPortal for actual STK Push
+          router.push({
+            pathname: "/PaymentPortal",
+            params: {
+              poolId: "WALLET_TOPUP",
+              poolName: "Fami Wallet Top-up",
+              amount: enterAmount,
+              contractType: "standard",
+              method: "M-Pesa"
+            }
+          } as any);
+          return;
+        }
+
+        // For other methods (demo/manual), keep existing logic for now
         await addDoc(txRef, {
           uid: user.uid,
           type,
