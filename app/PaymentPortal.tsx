@@ -17,6 +17,8 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from "@expo/vector-icons";
 import { handleCloudFunctionError } from "../services/cloudFunctions";
 import { processLocalInvestment } from "../services/localInvestment";
+import { initiateSTKPush } from "../services/mpesaService";
+import { auth } from "../app/firebaseConfig";
 
 const { width, height } = Dimensions.get("window");
 
@@ -26,6 +28,7 @@ export default function PaymentPortal() {
     const { poolId, poolName, amount, contractType, method } = params as any;
 
     const [reference, setReference] = useState("");
+    const [phone, setPhone] = useState(auth.currentUser?.phoneNumber || "");
     const [loading, setLoading] = useState(false);
     const [showSimulation, setShowSimulation] = useState(false);
     const [simulationStep, setSimulationStep] = useState(1); // 1: prompt, 2: processing, 3: success
@@ -50,6 +53,35 @@ export default function PaymentPortal() {
     const copyToClipboard = (text: string, label: string) => {
         Clipboard.setString(text);
         Alert.alert("Copied", `${label} copied to clipboard`);
+    };
+
+    const handleSTKPush = async () => {
+        if (!phone || phone.length < 10) {
+            Alert.alert("Error", "Please enter a valid M-Pesa phone number.");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const result = await initiateSTKPush(
+                phone,
+                parseFloat(amount),
+                poolId,
+                poolName
+            );
+
+            if (result.success) {
+                Alert.alert(
+                    "Request Sent",
+                    "Please check your phone for an M-Pesa PIN prompt to complete the payment.",
+                    [{ text: "OK", onPress: () => router.push("/(tabs)/Home") }]
+                );
+            }
+        } catch (error: any) {
+            Alert.alert("M-Pesa Error", error.message || "Failed to initiate STK push.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleVerify = async (providedRef?: string) => {
@@ -119,6 +151,42 @@ export default function PaymentPortal() {
                     <Text style={styles.amountLabel}>Total to Pay</Text>
                     <Text style={styles.amountValue}>KES {parseFloat(amount).toLocaleString()}</Text>
                 </View>
+
+                {method === "M-Pesa" && (
+                    <View style={styles.stkSection}>
+                        <Text style={styles.sectionTitle}>Automated M-Pesa (STK Push)</Text>
+                        <Text style={styles.inputLabel}>Confirm your M-Pesa phone number</Text>
+                        <View style={styles.phoneInputRow}>
+                            <View style={styles.phonePrefix}>
+                                <Text style={styles.prefixText}>+254</Text>
+                            </View>
+                            <TextInput
+                                style={styles.phoneInput}
+                                placeholder="7XXXXXXXX"
+                                value={phone.startsWith('254') ? phone.slice(3) : phone.startsWith('0') ? phone.slice(1) : phone}
+                                onChangeText={(text) => {
+                                    const cleaned = text.replace(/[^0-9]/g, '');
+                                    setPhone('254' + (cleaned.startsWith('0') ? cleaned.slice(1) : cleaned));
+                                }}
+                                keyboardType="number-pad"
+                                maxLength={9}
+                            />
+                        </View>
+                        <TouchableOpacity
+                            style={[styles.stkButton, loading && styles.disabledButton]}
+                            onPress={handleSTKPush}
+                            disabled={loading}
+                        >
+                            {loading ? <ActivityIndicator color="white" /> : (
+                                <>
+                                    <MaterialCommunityIcons name="cellphone-nfc" size={24} color="white" />
+                                    <Text style={styles.stkButtonText}>Send Payment Prompt</Text>
+                                </>
+                            )}
+                        </TouchableOpacity>
+                        <Text style={styles.stkHint}>Enter your M-Pesa PIN on the pop-up that appears on your phone.</Text>
+                    </View>
+                )}
 
                 {/* Simulation Shortcut for Demo Users */}
                 <TouchableOpacity style={styles.demoCard} onPress={startSimulation}>
@@ -429,4 +497,68 @@ const styles = StyleSheet.create({
         alignItems: "center"
     },
     successBtnText: { color: "white", fontSize: 15, fontWeight: "800" },
+    stkSection: {
+        backgroundColor: "white",
+        padding: 20,
+        borderRadius: 24,
+        borderWidth: 1,
+        borderColor: "#E2E8F0",
+        marginBottom: 20,
+    },
+    phoneInputRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#F8FAFC",
+        borderWidth: 1,
+        borderColor: "#E2E8F0",
+        borderRadius: 16,
+        marginBottom: 15,
+        overflow: "hidden"
+    },
+    phonePrefix: {
+        backgroundColor: "#F1F5F9",
+        paddingHorizontal: 15,
+        height: 55,
+        justifyContent: "center",
+        borderRightWidth: 1,
+        borderRightColor: "#E2E8F0"
+    },
+    prefixText: {
+        fontSize: 16,
+        fontWeight: "700",
+        color: "#64748B"
+    },
+    phoneInput: {
+        flex: 1,
+        height: 55,
+        paddingHorizontal: 15,
+        fontSize: 18,
+        fontWeight: "800",
+        color: "#0B3D2E",
+    },
+    stkButton: {
+        backgroundColor: "#10B981",
+        borderRadius: 16,
+        height: 55,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 10,
+        shadowColor: "#10B981",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+    },
+    stkButtonText: {
+        color: "white",
+        fontSize: 16,
+        fontWeight: "800"
+    },
+    stkHint: {
+        fontSize: 11,
+        color: "#64748B",
+        textAlign: "center",
+        marginTop: 12,
+        fontWeight: "500"
+    }
 });

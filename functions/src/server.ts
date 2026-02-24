@@ -16,6 +16,7 @@ import { requestWithdrawal } from './investments/requestWithdrawal';
 import { buyProduce } from './marketplace/buyProduce';
 import { createMarketAccessPlan } from './marketplace/marketAccess';
 import { approveWithdrawal } from './admin/processWithdrawal';
+import { initiateSTKPush, handleMpesaCallback } from './mpesa/mpesaController';
 
 dotenv.config();
 
@@ -80,8 +81,12 @@ const verifyToken = async (req: express.Request, res: express.Response, next: ex
     }
 };
 
+// M-Pesa Callback (MUST BE PUBLIC)
+app.post('/api/mpesa/callback', handleMpesaCallback);
+
 // Apply token verification to all /api routes
 app.use('/api', verifyToken);
+app.post('/api/mpesa/stk-push', initiateSTKPush);
 
 
 // Helper to convert Firebase https.onCall functions into Express route handlers.
